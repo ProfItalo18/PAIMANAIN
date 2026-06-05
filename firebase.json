@@ -1,0 +1,1 @@
+{"firestore":{"rules":"firebase.rules"},"storage":{"rules":"storage.rules"},"hosting":{"source":".","ignore":["firebase.json","**/.*","**/node_modules/**"],"frameworksBackend":{"region":"southamerica-east1"}}}

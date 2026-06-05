@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --pai-blue: #0070b8;
+  --pai-green: #5c9f45;
+  --pai-ink: #0f172a;
+  --pai-muted: #64748b;
+  --pai-surface: rgba(255,255,255,.78);
+  --pai-border: rgba(255,255,255,.72);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  min-height: 100vh;
+  color: #111827;
+  background:
+    radial-gradient(circle at 9% 6%, rgba(0,112,184,.20), transparent 24rem),
+    radial-gradient(circle at 91% 0%, rgba(92,159,69,.18), transparent 25rem),
+    radial-gradient(circle at 48% 100%, rgba(14,165,233,.12), transparent 34rem),
+    linear-gradient(135deg, #f8fafc 0%, #eef6ff 45%, #f7fbf3 100%);
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(120deg, rgba(255,255,255,.72), rgba(255,255,255,.28)),
+    radial-gradient(circle at 50% 45%, rgba(255,255,255,.68), transparent 34rem);
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(15,23,42,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15,23,42,.045) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+
+::selection { background: rgba(0,112,184,.18); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(226,232,240,.65); border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #94a3b8, #64748b); border-radius: 999px; border: 2px solid rgba(241,245,249,.9); }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #64748b, #475569); }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.glass {
+  border: 1px solid rgba(255,255,255,.72);
+  background: linear-gradient(145deg, rgba(255,255,255,.86), rgba(255,255,255,.62));
+  backdrop-filter: blur(26px) saturate(145%);
+  box-shadow:
+    0 24px 80px rgba(15,23,42,.11),
+    inset 0 1px 0 rgba(255,255,255,.70);
+}
+
+.neo-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.76);
+  background: linear-gradient(145deg, rgba(255,255,255,.90), rgba(255,255,255,.66));
+  box-shadow:
+    0 28px 80px rgba(15,23,42,.11),
+    inset 0 1px 0 rgba(255,255,255,.82);
+  backdrop-filter: blur(28px) saturate(150%);
+}
+
+.neo-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at top left, rgba(0,112,184,.11), transparent 18rem),
+    radial-gradient(circle at bottom right, rgba(92,159,69,.10), transparent 16rem);
+}
+
+.neo-card > * { position: relative; z-index: 1; }
+
+.form-label { @apply mb-1 block text-xs font-bold uppercase tracking-[0.18em] text-slate-500; }
+
+.responsive-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+}
+
+select {
+  scrollbar-width: thin;
+}
+
+select::-webkit-scrollbar { width: 8px; }
+select::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 999px;
+}
+
+@media (max-width: 640px) {
+  body::after { background-size: 26px 26px; }
+  .glass, .neo-card { backdrop-filter: blur(18px) saturate(130%); }
+}
+
+@media print {
+  body { background: white; }
+  body::before, body::after { display: none; }
+  .no-print { display: none !important; }
+  .print-a4 { box-shadow: none !important; margin: 0 !important; width: 100% !important; }
+  .page-break { page-break-before: always; }
+}

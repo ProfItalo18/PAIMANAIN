@@ -1,0 +1,161 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+             (request.auth.token.email == "itaopovos@gmail.com" || request.auth.token.email == "colavaliacao@gmail.com");
+    }
+
+    function isSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userExists() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userTurmasIds() {
+      return userExists() && userDoc().data.turmasIds is list ? userDoc().data.turmasIds : [];
+    }
+
+    function userDisciplinasIds() {
+      return userExists() && userDoc().data.disciplinasIds is list ? userDoc().data.disciplinasIds : [];
+    }
+
+    function turmaExists(turmaId) {
+      return turmaId is string && exists(/databases/$(database)/documents/turmas/$(turmaId));
+    }
+
+    function turmaDoc(turmaId) {
+      return get(/databases/$(database)/documents/turmas/$(turmaId));
+    }
+
+    function professoresDaTurma(turmaId) {
+      return turmaExists(turmaId) && turmaDoc(turmaId).data.professoresIds is list
+        ? turmaDoc(turmaId).data.professoresIds
+        : [];
+    }
+
+    function isProfessorNaTurmaPorDocumentoDaTurma() {
+      return isSignedIn() &&
+             resource.data.professoresIds is list &&
+             request.auth.uid in resource.data.professoresIds;
+    }
+
+    function isProfessorNaTurmaPorUserDoc(turmaId) {
+      return isSignedIn() && turmaId is string && turmaId in userTurmasIds();
+    }
+
+    function isProfessorDaTurma(turmaId) {
+      return isSignedIn() && turmaId is string && (
+        isAdmin() ||
+        request.auth.uid in professoresDaTurma(turmaId) ||
+        isProfessorNaTurmaPorUserDoc(turmaId)
+      );
+    }
+
+    function userCannotChangeProtectedFields(userId) {
+      return isSelf(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.funcao == resource.data.funcao
+        && request.resource.data.turmasIds == resource.data.turmasIds
+        && request.resource.data.disciplinasIds == resource.data.disciplinasIds;
+    }
+
+    function paiPermitidoParaProfessor(data) {
+      return data.turmaId is string && isProfessorDaTurma(data.turmaId);
+    }
+
+    function paiSemTrocarVinculos() {
+      return request.resource.data.turmaId == resource.data.turmaId &&
+             request.resource.data.estudanteId == resource.data.estudanteId;
+    }
+
+    function paiAindaEditavelPeloProfessor() {
+      return !('status' in resource.data) ||
+             resource.data.status == 'rascunho';
+    }
+
+    function professorPodeRegistrarAssinaturaAposEncaminhado() {
+      return resource.data.status == 'encaminhado_visto' &&
+             request.resource.data.status == 'encaminhado_visto';
+    }
+
+    function professorMantemFluxoAteVisto() {
+      return request.resource.data.status == 'rascunho' ||
+             request.resource.data.status == 'encaminhado_visto';
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin() || isSelf(userId);
+      allow create: if isSignedIn() && (isAdmin() || isSelf(userId));
+      allow update: if isAdmin() || (isSelf(userId) && userCannotChangeProtectedFields(userId));
+      allow delete: if isAdmin();
+    }
+
+    match /turmas/{turmaId} {
+      allow read: if isAdmin() ||
+        isProfessorNaTurmaPorDocumentoDaTurma() ||
+        isProfessorNaTurmaPorUserDoc(turmaId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /disciplinas/{disciplinaId} {
+      allow read: if isAdmin() || (
+        isSignedIn() && (
+          resource.data.professorId == request.auth.uid ||
+          disciplinaId in userDisciplinasIds() ||
+          isProfessorDaTurma(resource.data.turmaId)
+        )
+      );
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /estudantes/{estudanteId} {
+      allow read: if isAdmin() || (
+        resource.data.turmaId is string &&
+        (
+          resource.data.turmaId in userTurmasIds() ||
+          isProfessorDaTurma(resource.data.turmaId)
+        )
+      );
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /pais/{paiId} {
+      allow read: if isAdmin() || (
+        resource.data.turmaId is string &&
+        (
+          resource.data.turmaId in userTurmasIds() ||
+          paiPermitidoParaProfessor(resource.data)
+        )
+      );
+      allow create: if isAdmin() || paiPermitidoParaProfessor(request.resource.data);
+      allow update: if isAdmin() || (
+        paiPermitidoParaProfessor(resource.data) &&
+        paiSemTrocarVinculos() &&
+        professorMantemFluxoAteVisto() &&
+        (
+          paiAindaEditavelPeloProfessor() ||
+          professorPodeRegistrarAssinaturaAposEncaminhado()
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /instituicoes/{instituicaoId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}

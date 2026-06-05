@@ -1,0 +1,2 @@
+export function calcularIdade(dataNascimento: string) { if (!dataNascimento) return ''; const nasc = new Date(dataNascimento); const hoje = new Date(); let idade = hoje.getFullYear() - nasc.getFullYear(); const m = hoje.getMonth() - nasc.getMonth(); if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--; return String(idade); }
+export function formatDateBr(value?: string) { if (!value) return ''; const [y,m,d] = value.split('-'); return y && m && d ? `${d}/${m}/${y}` : value; }
